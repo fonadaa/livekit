@@ -16,6 +16,15 @@ import type { ConnectionDetails } from "./api/connection-details/route";
 import { NoAgentNotification } from "@/components/NoAgentNotification";
 import { CloseIcon } from "@/components/CloseIcon";
 import { useKrispNoiseFilter } from "@livekit/components-react/krisp";
+import { AiOutlineAudio } from 'react-icons/ai';
+
+declare module '@livekit/components-react' {
+  export function useVoiceAssistant(): {
+    state: string; // Adjust type as necessary
+    audioTrack: any; // Adjust type as necessary
+    requestMicrophoneAccess: () => Promise<boolean>;
+  };
+}
 
 export default function Page() {
   const [connectionDetails, updateConnectionDetails] = useState<
@@ -75,19 +84,46 @@ export default function Page() {
 function SimpleVoiceAssistant(props: {
   onStateChange: (state: AgentState) => void;
 }) {
-  const { state, audioTrack } = useVoiceAssistant();
+  const { state, audioTrack, requestMicrophoneAccess } = useVoiceAssistant();
+  const [isMicrophoneGranted, setIsMicrophoneGranted] = useState(false);
+
+  const handleMicrophoneClick = async () => {
+    const granted = await requestMicrophoneAccess();
+    setIsMicrophoneGranted(granted);
+  };
+
   useEffect(() => {
     props.onStateChange(state);
   }, [props, state]);
+
   return (
-    <div className="h-[300px] max-w-[90vw] mx-auto">
-      <BarVisualizer
-        state={state}
-        barCount={5}
-        trackRef={audioTrack}
-        className="agent-visualizer"
-        options={{ minHeight: 24 }}
-      />
+    <div className="flex flex-col items-center justify-center h-full">
+      {!isMicrophoneGranted ? (
+        <button
+          onClick={handleMicrophoneClick}
+          className="flex items-center justify-center w-16 h-16 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition duration-200"
+        >
+          <AiOutlineAudio className="w-8 h-8" />
+        </button>
+      ) : (
+        <div className="relative">
+          <BarVisualizer
+            state={state}
+            trackRef={audioTrack}
+            options={{ minHeight: 20, maxHeight: 100 }}
+            className="flex justify-center items-center"
+          />
+          {state === 'thinking' && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-24 h-24 border-4 border-blue-500 rounded-full animate-pulse"></div>
+            </div>
+          )}
+        </div>
+      )}
+      <div className="mt-4 text-center">
+        <h2 className="text-xl font-semibold text-gray-800">Voice Assistant</h2>
+        <p className="text-gray-600">Interact with your voice assistant seamlessly.</p>
+      </div>
     </div>
   );
 }
@@ -117,7 +153,7 @@ function ControlBar(props: {
             className="uppercase absolute left-1/2 -translate-x-1/2 px-4 py-2 bg-white text-black rounded-md"
             onClick={() => props.onConnectButtonClicked()}
           >
-            Start a conversation
+            Start a conversation Ravindra !
           </motion.button>
         )}
       </AnimatePresence>
