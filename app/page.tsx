@@ -9,6 +9,33 @@ import { NoAgentNotification } from "@/components/NoAgentNotification";
 import { useKrispNoiseFilter } from "@livekit/components-react/krisp";
 import SimpleVoiceAssistant from "./component/SimpleVoiceAssistant";
 import { FcEndCall } from "react-icons/fc";
+import { Component, ErrorInfo, ReactNode } from 'react';
+
+class ErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(_: Error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.warn('Krisp error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return null; // Or some fallback UI
+    }
+
+    return this.props.children;
+  }
+}
 
 export default function Page() {
   const [connectionDetails, updateConnectionDetails] = useState<
@@ -32,39 +59,96 @@ export default function Page() {
       data-lk-theme="default"
       className="h-full grid content-center bg-[var(--lk-bg)]"
     >
-      <LiveKitRoom
-        token={connectionDetails?.participantToken}
-        serverUrl={connectionDetails?.serverUrl}
-        connect={connectionDetails !== undefined}
-        audio={true}
-        video={false}
-        onMediaDeviceFailure={onDeviceFailure}
-        onDisconnected={() => {
-          updateConnectionDetails(undefined);
-        }}
-        className="grid grid-rows-[2fr_1fr] items-center"
-      >
-        <SimpleVoiceAssistant onStateChange={setAgentState} />
-        <ControlBar
-          onConnectButtonClicked={onConnectButtonClicked}
-          agentState={agentState}
-        />
-        <RoomAudioRenderer />
-        <NoAgentNotification state={agentState} />
-      </LiveKitRoom>
+      <ErrorBoundary>
+        <LiveKitRoom
+          token={connectionDetails?.participantToken}
+          serverUrl={connectionDetails?.serverUrl}
+          connect={connectionDetails !== undefined}
+          audio={true}
+          video={false}
+          onMediaDeviceFailure={onDeviceFailure}
+          onDisconnected={() => {
+            updateConnectionDetails(undefined);
+          }}
+          className="grid grid-rows-[2fr_1fr] items-center"
+        >
+          <SimpleVoiceAssistant onStateChange={setAgentState} />
+          <ControlBar
+            onConnectButtonClicked={onConnectButtonClicked}
+            agentState={agentState}
+          />
+          <RoomAudioRenderer />
+          <NoAgentNotification state={agentState} />
+          <KrispNoiseManager agentState={agentState} />
+        </LiveKitRoom>
+      </ErrorBoundary>
     </main>
   );
+}
+
+// Create a new component to handle Krisp noise filter
+function KrispNoiseManager({ agentState }: { agentState: AgentState }) {
+  const krisp = useKrispNoiseFilter();
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const initKrisp = async () => {
+      if (agentState !== 'disconnected' && !isInitialized) {
+        try {
+          // Add a small delay to ensure WASM is loaded
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Check if component is still mounted
+          if (!mounted) return;
+
+          await krisp.setNoiseFilterEnabled(true);
+          setIsInitialized(true);
+        } catch (error) {
+          // If it's not ready, try again after a delay
+          if (error.message?.includes('WASM_OR_WORKER_NOT_READY') && mounted) {
+            setTimeout(initKrisp, 1000);
+          } else {
+            console.warn('Krisp initialization warning:', error);
+          }
+        }
+      }
+    };
+
+    if (agentState !== 'disconnected') {
+      initKrisp();
+    } else if (isInitialized) {
+      // Disable when disconnected
+      try {
+        krisp.setNoiseFilterEnabled(false);
+        setIsInitialized(false);
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    }
+
+    return () => {
+      mounted = false;
+      if (isInitialized) {
+        try {
+          krisp.setNoiseFilterEnabled(false);
+          setIsInitialized(false);
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+      }
+    };
+  }, [agentState, krisp, isInitialized]);
+
+  return null;
 }
 
 function ControlBar(props: {
   onConnectButtonClicked: () => void;
   agentState: AgentState;
 }) {
-  const krisp = useKrispNoiseFilter();
-  useEffect(() => {
-    krisp.setNoiseFilterEnabled(true);
-  }, []);
-
+  // Remove Krisp initialization from ControlBar
   return (
     <div className="relative h-[100px]">
       <AnimatePresence>
@@ -93,7 +177,6 @@ function ControlBar(props: {
             >
               <VoiceAssistantControlBar controls={{ leave: false }} />
               <DisconnectButton>
-                {/* <CloseIcon /> */}
                 <FcEndCall />End Call
               </DisconnectButton>
             </motion.div>

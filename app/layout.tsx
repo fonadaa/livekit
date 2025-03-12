@@ -14,6 +14,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`h-full ${publicSans400.className}`}>
+      <head>
+        <script id="noiseVertexShader" type="x-shader/x-vertex" dangerouslySetInnerHTML={{
+          __html: `
+            varying vec3 vNormal;
+            uniform float time;
+            // ... rest of your vertex shader code ...
+          `
+        }} />
+        <script id="fragmentShader" type="x-shader/x-vertex" dangerouslySetInnerHTML={{
+          __html: `
+            varying vec3 vNormal;
+            uniform float time;
+            // ... rest of your fragment shader code ...
+          `
+        }} />
+      </head>
       <body className="h-full">{children}</body>
     </html>
   );
