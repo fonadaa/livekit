@@ -185,7 +185,7 @@ const fragmentShader = `
     vec3 g010 = vec3(gx0.z, gy0.z, gz0.z);
     vec3 g110 = vec3(gx0.w, gy0.w, gz0.w);
     vec3 g001 = vec3(gx1.x, gy1.x, gz1.x);
-    vec3 g101 = vec3(gx1.y, gy1.y, gz1.y);
+    vec3 g101 = vec3(gx1.y, gy1.y, gz1.x);
     vec3 g011 = vec3(gx1.z, gy1.z, gz1.z);
     vec3 g111 = vec3(gx1.w, gy1.w, gz1.w);
     vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
@@ -414,14 +414,15 @@ const AbstractBall: React.FC<AbstractBallProps> = ({ perlinTime, chromaRGBr, chr
   const blinkRef = useRef<boolean>(false)
 
   useEffect(() => {
-    if (!mountRef.current) return
+    const currentRef = mountRef.current;
+    if (!currentRef) return
 
     const scene = new THREE.Scene()
 
     // Update camera settings for better 3D perspective
     const camera = new THREE.PerspectiveCamera(
       35, // Wider FOV for better depth perception
-      mountRef.current.clientWidth / mountRef.current.clientHeight,
+      currentRef.clientWidth / currentRef.clientHeight,
       0.1,
       1000,
     )
@@ -434,9 +435,9 @@ const AbstractBall: React.FC<AbstractBallProps> = ({ perlinTime, chromaRGBr, chr
       alpha: true,
       precision: "highp",
     })
-    renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight)
+    renderer.setSize(currentRef.clientWidth, currentRef.clientHeight)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    mountRef.current.appendChild(renderer.domElement)
+    currentRef.appendChild(renderer.domElement)
 
     // Even higher resolution sphere
     const geometry = new THREE.SphereGeometry(
@@ -455,15 +456,6 @@ const AbstractBall: React.FC<AbstractBallProps> = ({ perlinTime, chromaRGBr, chr
     logoTexture.minFilter = THREE.LinearFilter
     logoTexture.magFilter = THREE.LinearFilter
     logoTexture.anisotropy = renderer.capabilities.getMaxAnisotropy()
-
-    // Update color definitions with new color palette
-    const colors = {
-      disconnected: new THREE.Color("#4A6670"), // Blue-gray
-      listening: new THREE.Color("#80C7A0"), // Light Green
-      thinking: new THREE.Color("#9B4B8C"), // Purple
-      speaking: new THREE.Color("#80C7A0"), // Light Green
-      default: new THREE.Color("#80C7A0"), // Light Green
-    }
 
     // Update uniforms for wave-like effects and add logo-related uniforms
     const uniforms = {
@@ -648,10 +640,10 @@ const AbstractBall: React.FC<AbstractBallProps> = ({ perlinTime, chromaRGBr, chr
 
     // Center the sphere on resize
     const handleResize = () => {
-      if (!mountRef.current) return
+      if (!currentRef) return
 
-      const width = mountRef.current.clientWidth
-      const height = mountRef.current.clientHeight
+      const width = currentRef.clientWidth
+      const height = currentRef.clientHeight
 
       camera.aspect = width / height
       camera.updateProjectionMatrix()
@@ -673,8 +665,8 @@ const AbstractBall: React.FC<AbstractBallProps> = ({ perlinTime, chromaRGBr, chr
       if (rotationState.timeoutId) {
         clearTimeout(rotationState.timeoutId)
       }
-      if (mountRef.current) {
-        mountRef.current.removeChild(renderer.domElement)
+      if (currentRef) {
+        currentRef.removeChild(renderer.domElement)
       }
       geometry.dispose()
       material.dispose()

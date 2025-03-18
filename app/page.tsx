@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { LiveKitRoom, useVoiceAssistant, RoomAudioRenderer, VoiceAssistantControlBar, AgentState, DisconnectButton, } from "@livekit/components-react";
+import { LiveKitRoom, RoomAudioRenderer, VoiceAssistantControlBar, AgentState, DisconnectButton, } from "@livekit/components-react";
 import { useCallback, useEffect, useState } from "react";
 import { MediaDeviceFailure } from "livekit-client";
 import type { ConnectionDetails } from "./api/connection-details/route";
@@ -20,7 +20,7 @@ class ErrorBoundary extends Component<
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(_: Error) {
+  static getDerivedStateFromError(): { hasError: boolean } {
     return { hasError: true };
   }
 
@@ -105,9 +105,9 @@ function KrispNoiseManager({ agentState }: { agentState: AgentState }) {
 
           await krisp.setNoiseFilterEnabled(true);
           setIsInitialized(true);
-        } catch (error) {
+        } catch (error: unknown) {
           // If it's not ready, try again after a delay
-          if (error.message?.includes('WASM_OR_WORKER_NOT_READY') && mounted) {
+          if (error instanceof Error && error.message?.includes('WASM_OR_WORKER_NOT_READY') && mounted) {
             setTimeout(initKrisp, 1000);
           } else {
             console.warn('Krisp initialization warning:', error);
