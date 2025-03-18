@@ -52,6 +52,12 @@ export default function Page() {
     undefined
   );
   const [agentState, setAgentState] = useState<AgentState>("disconnected");
+  const [isWidget] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.self !== window.top; // Check if running in iframe
+    }
+    return false;
+  });
 
   const onConnectButtonClicked = useCallback(async () => {
     const url = new URL(
@@ -64,7 +70,10 @@ export default function Page() {
   }, []);
 
   return (
-    <main data-lk-theme="default" className="h-full grid content-center bg-[var(--lk-bg)]">
+    <main 
+      data-lk-theme="default" 
+      className={`h-full grid content-center bg-[var(--lk-bg)] ${isWidget ? 'fonada-widget' : ''}`}
+    >
       <ErrorBoundary>
         <LiveKitRoom
           token={connectionDetails?.participantToken}
@@ -79,7 +88,10 @@ export default function Page() {
           className="grid grid-rows-[2fr_1fr] items-center"
         >
           <SimpleVoiceAssistant onStateChange={setAgentState} />
-          <ControlBar onConnectButtonClicked={onConnectButtonClicked} agentState={agentState} />
+          <ControlBar
+            onConnectButtonClicked={onConnectButtonClicked}
+            agentState={agentState}
+          />
           <RoomAudioRenderer />
           <NoAgentNotification state={agentState} />
           <KrispNoiseManager agentState={agentState} />

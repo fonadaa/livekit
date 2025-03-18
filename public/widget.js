@@ -2,10 +2,51 @@
     if (window.FonadaVoiceAssistantLoaded) return;
     window.FonadaVoiceAssistantLoaded = true;
   
-    // Import the component only on the client side
-    const script = document.createElement("script");
-    script.src = "https://fonada.vercel.app/_next/static/chunks/pages/component/FonadaVoiceAssistant.js";
-    script.type = "module";
-    document.head.appendChild(script);
+    // Add styles
+    const style = document.createElement('style');
+    style.textContent = `
+      fonada-voice-assistant {
+        display: block;
+        width: 100%;
+        height: 300px;
+        border: none;
+      }
+    `;
+    document.head.appendChild(style);
+  
+    // Load required styles
+    const linkElement = document.createElement('link');
+    linkElement.rel = 'stylesheet';
+    linkElement.href = 'https://fonada.vercel.app/styles.css';
+    document.head.appendChild(linkElement);
+  
+    // Initialize the web component
+    class FonadaVoiceAssistant extends HTMLElement {
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+      }
+  
+      connectedCallback() {
+        const iframe = document.createElement('iframe');
+        iframe.src = 'https://fonada.vercel.app';
+        iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
+        
+        this.shadowRoot.innerHTML = `
+          <style>
+            :host {
+              display: block;
+              width: 100%;
+              height: 300px;
+            }
+          </style>
+        `;
+        this.shadowRoot.appendChild(iframe);
+      }
+    }
+  
+    if (!customElements.get('fonada-voice-assistant')) {
+      customElements.define('fonada-voice-assistant', FonadaVoiceAssistant);
+    }
   })();
   

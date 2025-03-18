@@ -1,0 +1,10 @@
+/* Add any global styles needed for your widget */
+:root {
+  --lk-bg: transparent;
+}
+
+.fonada-widget {
+  font-family: system-ui, -apple-system, sans-serif;
+  position: relative;
+  z-index: 999999;
+} 
