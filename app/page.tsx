@@ -193,12 +193,16 @@
 //   );
 // }
 
-
-
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { LiveKitRoom, RoomAudioRenderer, VoiceAssistantControlBar, AgentState, DisconnectButton, } from "@livekit/components-react";
+import {
+  LiveKitRoom,
+  RoomAudioRenderer,
+  VoiceAssistantControlBar,
+  AgentState,
+  DisconnectButton,
+} from "@livekit/components-react";
 import { useCallback, useEffect, useState } from "react";
 import { MediaDeviceFailure } from "livekit-client";
 import type { ConnectionDetails } from "./api/connection-details/route";
@@ -206,7 +210,7 @@ import { NoAgentNotification } from "@/components/NoAgentNotification";
 import { useKrispNoiseFilter } from "@livekit/components-react/krisp";
 import SimpleVoiceAssistant from "./component/SimpleVoiceAssistant";
 import { FcEndCall } from "react-icons/fc";
-import { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from "react";
 
 // 🔹 Widget Definition
 class FonadaVoiceAssistant extends HTMLElement {
@@ -220,8 +224,10 @@ class FonadaVoiceAssistant extends HTMLElement {
     import("./component/SimpleVoiceAssistant").then((mod) => {
       const root = document.createElement("div");
       container.appendChild(root);
-      import("react-dom").then((ReactDOM) => {
-        ReactDOM.createRoot(root).render(<mod.default />);
+      import("react-dom/client").then((ReactDOM) => {
+        ReactDOM.createRoot(root).render(
+          <mod.default onStateChange={() => {}} /> // ✅ Fix applied here
+        );
       });
     });
   }
@@ -233,10 +239,7 @@ if (!customElements.get("fonada-voice-assistant")) {
 }
 
 // 🔹 Error Boundary Component
-class ErrorBoundary extends Component<
-  { children: ReactNode },
-  { hasError: boolean }
-> {
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   constructor(props: { children: ReactNode }) {
     super(props);
     this.state = { hasError: false };
@@ -247,28 +250,26 @@ class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.warn('Krisp error:', error, errorInfo);
+    console.warn("Krisp error:", error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
       return null; // Or some fallback UI
     }
-
     return this.props.children;
   }
 }
 
 export default function Page() {
-  const [connectionDetails, updateConnectionDetails] = useState<
-    ConnectionDetails | undefined
-  >(undefined);
+  const [connectionDetails, updateConnectionDetails] = useState<ConnectionDetails | undefined>(
+    undefined
+  );
   const [agentState, setAgentState] = useState<AgentState>("disconnected");
 
   const onConnectButtonClicked = useCallback(async () => {
     const url = new URL(
-      process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ??
-      "/api/connection-details",
+      process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details",
       window.location.origin
     );
     const response = await fetch(url.toString());
@@ -277,10 +278,7 @@ export default function Page() {
   }, []);
 
   return (
-    <main
-      data-lk-theme="default"
-      className="h-full grid content-center bg-[var(--lk-bg)]"
-    >
+    <main data-lk-theme="default" className="h-full grid content-center bg-[var(--lk-bg)]">
       <ErrorBoundary>
         <LiveKitRoom
           token={connectionDetails?.participantToken}
@@ -295,10 +293,7 @@ export default function Page() {
           className="grid grid-rows-[2fr_1fr] items-center"
         >
           <SimpleVoiceAssistant onStateChange={setAgentState} />
-          <ControlBar
-            onConnectButtonClicked={onConnectButtonClicked}
-            agentState={agentState}
-          />
+          <ControlBar onConnectButtonClicked={onConnectButtonClicked} agentState={agentState} />
           <RoomAudioRenderer />
           <NoAgentNotification state={agentState} />
           <KrispNoiseManager agentState={agentState} />
@@ -317,24 +312,24 @@ function KrispNoiseManager({ agentState }: { agentState: AgentState }) {
     let mounted = true;
 
     const initKrisp = async () => {
-      if (agentState !== 'disconnected' && !isInitialized) {
+      if (agentState !== "disconnected" && !isInitialized) {
         try {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
           if (!mounted) return;
 
           await krisp.setNoiseFilterEnabled(true);
           setIsInitialized(true);
         } catch (error: unknown) {
-          if (error instanceof Error && error.message?.includes('WASM_OR_WORKER_NOT_READY') && mounted) {
+          if (error instanceof Error && error.message?.includes("WASM_OR_WORKER_NOT_READY") && mounted) {
             setTimeout(initKrisp, 1000);
           } else {
-            console.warn('Krisp initialization warning:', error);
+            console.warn("Krisp initialization warning:", error);
           }
         }
       }
     };
 
-    if (agentState !== 'disconnected') {
+    if (agentState !== "disconnected") {
       initKrisp();
     } else if (isInitialized) {
       try {
@@ -358,10 +353,7 @@ function KrispNoiseManager({ agentState }: { agentState: AgentState }) {
 }
 
 // 🔹 Control Bar
-function ControlBar(props: {
-  onConnectButtonClicked: () => void;
-  agentState: AgentState;
-}) {
+function ControlBar(props: { onConnectButtonClicked: () => void; agentState: AgentState }) {
   return (
     <div className="relative h-[100px]">
       <AnimatePresence>
@@ -371,7 +363,7 @@ function ControlBar(props: {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, top: "-10px" }}
             transition={{ duration: 1, ease: [0.09, 1.04, 0.245, 1.055] }}
-            className=" absolute left-1/2 -translate-x-1/2 px-4 py-2 bg-transparent backdrop-blur-md border border-white rounded-md shadow-lg"
+            className="absolute left-1/2 -translate-x-1/2 px-4 py-2 bg-transparent backdrop-blur-md border border-white rounded-md shadow-lg"
             onClick={() => props.onConnectButtonClicked()}
           >
             Start Call
@@ -379,21 +371,20 @@ function ControlBar(props: {
         )}
       </AnimatePresence>
       <AnimatePresence>
-        {props.agentState !== "disconnected" &&
-          props.agentState !== "connecting" && (
-            <motion.div
-              initial={{ opacity: 0, top: "10px" }}
-              animate={{ opacity: 1, top: 0 }}
-              exit={{ opacity: 0, top: "-10px" }}
-              transition={{ duration: 0.4, ease: [0.09, 1.04, 0.245, 1.055] }}
-              className="flex h-8 absolute left-1/2 -translate-x-1/2  justify-center"
-            >
-              <VoiceAssistantControlBar controls={{ leave: false }} />
-              <DisconnectButton>
-                <FcEndCall />End Call
-              </DisconnectButton>
-            </motion.div>
-          )}
+        {props.agentState !== "disconnected" && props.agentState !== "connecting" && (
+          <motion.div
+            initial={{ opacity: 0, top: "10px" }}
+            animate={{ opacity: 1, top: 0 }}
+            exit={{ opacity: 0, top: "-10px" }}
+            transition={{ duration: 0.4, ease: [0.09, 1.04, 0.245, 1.055] }}
+            className="flex h-8 absolute left-1/2 -translate-x-1/2 justify-center"
+          >
+            <VoiceAssistantControlBar controls={{ leave: false }} />
+            <DisconnectButton>
+              <FcEndCall /> End Call
+            </DisconnectButton>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );
