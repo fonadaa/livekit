@@ -83,7 +83,7 @@ function SimpleVoiceAssistant(props: { onStateChange: (state: AgentState) => voi
   return (
     <div className="h-[300px] w-full max-w-[90vw] mx-auto relative flex flex-col items-center">
       {state === "initializing" || state === "connecting" && (
-        <div className="text-xs text-gray-500 m-2">
+        <div className="text-s text-gray-700 mt-5">
           Hang on, we're granting your microphone access
         </div>
       )}
