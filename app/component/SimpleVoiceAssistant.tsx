@@ -29,6 +29,13 @@ function SimpleVoiceAssistant(props: { onStateChange: (state: AgentState) => voi
 
   // Map states to animation parameters with color influence
   const getAnimationParams = () => {
+    console.log('state--', state);
+    // disconnected -> when application loaded
+    // connecting -> wehen clicked on start call
+    // initializing -> till get the prmpt of allow microphone access
+    // thinking -> when assistant is thinking
+
+    // speaking -> when assistant is speaking
     switch (state) {
       case "disconnected":
         return {
