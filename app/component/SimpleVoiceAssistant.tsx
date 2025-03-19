@@ -15,14 +15,14 @@ type AbstractBallProps = {
 };
 
 // Fix the dynamic import with proper typing
-const AbstractBall = dynamic<AbstractBallProps>(() => 
-  import('./AbstractBall').then((mod) => mod.default as ComponentType<AbstractBallProps>), 
+const AbstractBall = dynamic<AbstractBallProps>(() =>
+  import('./AbstractBall').then((mod) => mod.default as ComponentType<AbstractBallProps>),
   { ssr: false }
 );
 
 function SimpleVoiceAssistant(props: { onStateChange: (state: AgentState) => void }) {
   const { state } = useVoiceAssistant();
-  
+
   useEffect(() => {
     props.onStateChange(state);
   }, [props, state]);
@@ -81,9 +81,17 @@ function SimpleVoiceAssistant(props: { onStateChange: (state: AgentState) => voi
   };
 
   return (
-    <div className="h-[300px] w-full max-w-[90vw] mx-auto relative">
+    <div className="h-[300px] w-full max-w-[90vw] mx-auto relative flex flex-col items-center">
+      {state === "initializing" || state === "connecting" && (
+        <div className="text-xs text-gray-500 m-2">
+          Hang on, we're granting your microphone access
+        </div>
+      )}
       <AbstractBall {...getAnimationParams()} />
     </div>
+    // <div className="h-[300px] w-full max-w-[90vw] mx-auto relative">
+    //   <AbstractBall {...getAnimationParams()} />
+    // </div>
   );
 }
 
